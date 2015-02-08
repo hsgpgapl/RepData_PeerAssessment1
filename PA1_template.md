@@ -68,6 +68,13 @@ Missing values in steps account for 13.11% of the observations.
 ###Per Day Calculations
 We calculated the mean and median steps per day, ignoring missing values, and produced the following histogram.
 
+
+```
+## The following objects are masked from df.imputed:
+## 
+##     date, date.value, dow, interval, steps
+```
+
 ![plot of chunk perday](figure/perday-1.png) 
 
 The mean number of steps per day is 10,767.19 and the median is 10,766.
@@ -76,6 +83,13 @@ The mean number of steps per day is 10,767.19 and the median is 10,766.
 ###Average Daily Activity Patterns
 
 We calculated the mean number of steps per 5 minute interval and produced the following graphic.  
+
+
+```
+## The following objects are masked from df.imputed:
+## 
+##     date, date.value, dow, interval, steps
+```
 
 ![plot of chunk average](figure/average-1.png) 
 
@@ -92,9 +106,16 @@ We imputed missing steps using a transform function from Ken Kleinsman in "Examp
 df.imputed  = transform(df, steps = ifelse(is.na(steps), mean(steps, na.rm=TRUE), steps))
 ```
 
+
+```
+## The following objects are masked from df.imputed (pos = 3):
+## 
+##     date, date.value, dow, interval, steps
+```
+
 ![plot of chunk computed2](figure/computed2-1.png) ![plot of chunk computed2](figure/computed2-2.png) 
 
-With imputation, The mean number of steps per day is 10,767.19 and the median is 10,767.19 compared to 10,767.19 and the median is 10,766 without imputation.  We see only a slight change in the median because of imputation, and the imputed histogram is consistent with the original histrogram.  THe following quick distributions show the effect of the imputation.
+With imputation, The mean number of steps per day is 10,767.19 and the median is 10,767.19 compared to 10,767.19 and the median is 10,766 without imputation.  We see only a slight change in the median because of imputation, and the imputed histogram is consistent with the original histrogram.  The following quick distributions show the effect of the imputation.
 
 
 ```r
@@ -140,13 +161,25 @@ table(df.imputed$dow,df.imputed$period)
 ##   Wednesday    2592       0
 ```
 
+
+```
+## The following objects are masked from df.imputed (pos = 3):
+## 
+##     date, date.value, dow, interval, steps
+## 
+## The following objects are masked from df.imputed (pos = 4):
+## 
+##     date, date.value, dow, interval, period, steps
+```
+
 ![plot of chunk differences2](figure/differences2-1.png) 
 
 ###Libraries Loaded  
 
 
+The following libraries are needed for reproducing the output: *knitr, dplyr, ggplot2, stats, graphics, grDevices, utils, datasets, methods, base*
 
-The following libraries are needed for reproducing the output: *dplyr, ggplot2, knitr, stats, graphics, grDevices, utils, datasets, methods, base*
+This run was created with R version 3.1.2 (2014-10-31) on a windows x64 bit machine.
 
 
 <!---
