@@ -62,6 +62,11 @@ summary(df)
 ```
 
 
+```r
+na.mean <- format(100*mean(is.na(df$steps)),digits=4)
+na.count <- format(sum(is.na(df$steps)),big.mark=",")
+all.count <- format(nrow(df),big.mark=",")
+```
 Missing values in steps account for 13.11% of the observations.
 
 
@@ -69,13 +74,38 @@ Missing values in steps account for 13.11% of the observations.
 We calculated the mean and median steps per day, ignoring missing values, and produced the following histogram.
 
 
+```r
+attach(df)
 ```
-## The following objects are masked from df.imputed:
+
+```
+## The following objects are masked from df.imputed (pos = 3):
+## 
+##     date, date.value, dow, interval, steps
+## 
+## The following objects are masked from df.imputed (pos = 4):
 ## 
 ##     date, date.value, dow, interval, steps
 ```
 
+```r
+perday <- aggregate(steps~date.value, FUN = sum, rm.NA=TRUE)
+detach(df)
+perday$steps.formatted <- format(perday$steps,big.mark=",")
+t<-ggplot(perday, aes(x=steps)) + geom_histogram(fill="green",color="black",) 
+t<- t + labs(title="Distribution of Total Steps Per Day (Without Imputation)", y="# of days", x ="steps taken") + scale_y_continuous(breaks=seq(c(0:10))) 
+t <- t + scale_x_continuous(breaks=c(0,5000,10000,15000,20000,25000), labels=c("0","5,000","10,000","15000","20,000","25000"))
+
+par(mfrow=c(1,1))
+suppressMessages(print(t))
+```
+
 ![plot of chunk perday](figure/perday-1.png) 
+
+```r
+steps.mean   <- format(mean(perday$steps),big.mark=",")
+steps.median <- format(median(perday$steps),big.mark=",")
+```
 
 The mean number of steps per day is 10,767.19 and the median is 10,766.
 
@@ -85,13 +115,36 @@ The mean number of steps per day is 10,767.19 and the median is 10,766.
 We calculated the mean number of steps per 5 minute interval and produced the following graphic.  
 
 
+```r
+attach(df)
 ```
-## The following objects are masked from df.imputed:
+
+```
+## The following objects are masked from df.imputed (pos = 3):
+## 
+##     date, date.value, dow, interval, steps
+## 
+## The following objects are masked from df.imputed (pos = 4):
 ## 
 ##     date, date.value, dow, interval, steps
 ```
 
+```r
+avgday <- aggregate(steps~interval, FUN = mean, rm.NA=TRUE)
+detach(df)
+
+t1 <- ggplot(avgday, aes(interval, steps)) + geom_line() + geom_point()
+t1 <- t1 + labs(title="Distribution of Steps", y="# of steps", x ="time of day") + scale_x_continuous(breaks=c(0,400,800,1200,1600,2000,2400),labels=c("12:01 AM","4 AM","8 AM","Noon","4 PM","8 PM","11:59PM"))
+par(mfrow=c(1,1))
+suppressMessages(print(t1))
+```
+
 ![plot of chunk average](figure/average-1.png) 
+
+```r
+m  <- max(avgday$steps)
+m  <-avgday[max(avgday$steps),"interval"]
+```
 
 Starting in the morning we see an increase of activity, with the time period of 1705 having the highest average number of steps.  Activity drops off during the evening.
 
@@ -107,13 +160,42 @@ df.imputed  = transform(df, steps = ifelse(is.na(steps), mean(steps, na.rm=TRUE)
 ```
 
 
+```r
+attach(df.imputed)
+```
+
 ```
 ## The following objects are masked from df.imputed (pos = 3):
 ## 
 ##     date, date.value, dow, interval, steps
+## 
+## The following objects are masked from df.imputed (pos = 4):
+## 
+##     date, date.value, dow, interval, steps
 ```
 
-![plot of chunk computed2](figure/computed2-1.png) ![plot of chunk computed2](figure/computed2-2.png) 
+```r
+perday.imputed <- aggregate(steps~date, FUN = sum, rm.NA=TRUE)
+perday.imputed$steps.formatted <- format(perday.imputed$steps,big.mark=",")
+t.imputed <-ggplot(perday.imputed, aes(x=steps)) + geom_histogram(fill="green",color="black",)
+t.imputed <- t.imputed + labs(title="Distribution of Total Steps Per Day (With Imputation)", y="# of days", x ="steps taken") + scale_y_continuous(breaks=seq(c(0:10))) 
+t.imputed <- t.imputed + scale_x_continuous(breaks=c(0,5000,10000,15000,20000,25000), labels=c("0","5,000","10,000","15000","20,000","25000"))
+par(mfrow=c(2,2))  # this code is NOT working
+suppressMessages(print(t.imputed))
+```
+
+![plot of chunk computed2](figure/computed2-1.png) 
+
+```r
+suppressMessages(print(t))
+```
+
+![plot of chunk computed2](figure/computed2-2.png) 
+
+```r
+steps.mean.imputed   <- format(mean(perday.imputed$steps),big.mark=",")
+steps.median.imputed <- format(median(perday.imputed$steps),big.mark=",")
+```
 
 With imputation, The mean number of steps per day is 10,767.19 and the median is 10,767.19 compared to 10,767.19 and the median is 10,766 without imputation.  We see only a slight change in the median because of imputation, and the imputed histogram is consistent with the original histrogram.  The following quick distributions show the effect of the imputation.
 
@@ -162,6 +244,10 @@ table(df.imputed$dow,df.imputed$period)
 ```
 
 
+```r
+attach(df.imputed)
+```
+
 ```
 ## The following objects are masked from df.imputed (pos = 3):
 ## 
@@ -169,13 +255,37 @@ table(df.imputed$dow,df.imputed$period)
 ## 
 ## The following objects are masked from df.imputed (pos = 4):
 ## 
+##     date, date.value, dow, interval, steps
+## 
+## The following objects are masked from df.imputed (pos = 5):
+## 
 ##     date, date.value, dow, interval, period, steps
+```
+
+```r
+df2a.imputed  <- aggregate(df.imputed$steps, list(interval,period), FUN=sum)
+df2b.imputed  <- aggregate(df.imputed$steps, list(interval,period), FUN=mean)
+colnames(df2a.imputed) <- c("interval","period","steps")
+colnames(df2b.imputed) <- c("interval","period","steps")
+detach(df.imputed)
+
+t2 <- ggplot(df2b.imputed, aes(interval, steps)) + geom_line() + geom_point() # the color is not working
+t2 <- t2 + labs(title="Distribution of Steps", y="# of steps", x ="time of day") + scale_x_continuous(breaks=c(0,400,800,1200,1600,2000,2400),labels=c("12:01 AM","4 AM","8 AM","Noon","4 PM","8 PM","11:59PM"))
+t2 <- t2 + facet_grid(period~.) + theme(strip.background = element_rect(fill="pink"))
+par(mfrow=c(1,1))
+suppressMessages(print(t2))
 ```
 
 ![plot of chunk differences2](figure/differences2-1.png) 
 
 ###Libraries Loaded  
 
+```r
+libraries.loaded <- .packages()
+require(utils)
+sinfo <- sessionInfo()
+pinfo <- .Platform
+```
 
 The following libraries are needed for reproducing the output: *knitr, dplyr, ggplot2, stats, graphics, grDevices, utils, datasets, methods, base*
 
@@ -184,6 +294,8 @@ This run was created with R version 3.1.2 (2014-10-31) on a windows x64 bit mach
 
 <!---
 References
+The following command is run manually to get the .md file for submission.
+knit2html("PA1_template.rmd")
 ---> 
 [1]: http://www.cnet.com/topics/wearable-tech/best-wearable-tech/  
 [2]: https://class.coursera.org/repdata-011/human_grading/view/courses/973512/assessments/3/submissions   

@@ -7,7 +7,7 @@ output:
     keep_md: true
 ---
 
-```{r libraries, echo = FALSE, results = "hide", include = FALSE}
+```{r libraries, echo = TRUE, results = "hide", include = FALSE}
 library("ggplot2")
 library("dplyr")
 library("knitr")
@@ -33,7 +33,7 @@ str(df)
 summary(df)
 ```
 
-```{r NA, echo = FALSE}
+```{r NA, echo = TRUE}
 na.mean <- format(100*mean(is.na(df$steps)),digits=4)
 na.count <- format(sum(is.na(df$steps)),big.mark=",")
 all.count <- format(nrow(df),big.mark=",")
@@ -44,7 +44,7 @@ Missing values in steps account for `r na.mean`% of the observations.
 ###Per Day Calculations
 We calculated the mean and median steps per day, ignoring missing values, and produced the following histogram.
 
-```{r perday, echo = FALSE}
+```{r perday, echo = TRUE}
 attach(df)
 perday <- aggregate(steps~date.value, FUN = sum, rm.NA=TRUE)
 detach(df)
@@ -67,7 +67,7 @@ The mean number of steps per day is `r steps.mean` and the median is `r steps.me
 
 We calculated the mean number of steps per 5 minute interval and produced the following graphic.  
 
-```{r average, echo = FALSE}
+```{r average, echo = TRUE}
 attach(df)
 avgday <- aggregate(steps~interval, FUN = mean, rm.NA=TRUE)
 detach(df)
@@ -93,7 +93,7 @@ We imputed missing steps using a transform function from Ken Kleinsman in "Examp
 df.imputed  = transform(df, steps = ifelse(is.na(steps), mean(steps, na.rm=TRUE), steps))
 ```
 
-```{r computed2, echo = FALSE}
+```{r computed2, echo = TRUE}
 attach(df.imputed)
 perday.imputed <- aggregate(steps~date, FUN = sum, rm.NA=TRUE)
 perday.imputed$steps.formatted <- format(perday.imputed$steps,big.mark=",")
@@ -111,7 +111,7 @@ steps.median.imputed <- format(median(perday.imputed$steps),big.mark=",")
 
 With imputation, The mean number of steps per day is `r steps.mean.imputed` and the median is `r steps.median.imputed` compared to `r steps.mean` and the median is `r steps.median` without imputation.  We see only a slight change in the median because of imputation, and the imputed histogram is consistent with the original histrogram.  The following quick distributions show the effect of the imputation.
 
-```{r checkimputations}
+```{r checkimputations, echo = TRUE}
 summary(perday$steps)
 summary(perday.imputed$steps)
 ```
@@ -122,14 +122,14 @@ In order to compare differences in activity between weekdays (Monday through Fri
 
 As can be seen from the following plots, activity on the weekdays begins earlier.  Overall, activity is also higher at each time of the weekday except for 8PM on the weekend.  This woudl suggestion that people are more active during the week, but both sleep later, and are less active on weekends, especially during sports season, when these data were collected.
 
-```{r differences}
+```{r differences, echo = TRUE}
 
 df.imputed$period <- as.factor(ifelse(weekdays( df.imputed$date.value) %in% c("Saturday","Sunday"), "Weekend", "Weekday")) 
 
 table(df.imputed$dow,df.imputed$period)
 ```
 
-```{r differences2, echo = FALSE}
+```{r differences2, echo = TRUE}
 attach(df.imputed)
 df2a.imputed  <- aggregate(df.imputed$steps, list(interval,period), FUN=sum)
 df2b.imputed  <- aggregate(df.imputed$steps, list(interval,period), FUN=mean)
@@ -145,7 +145,7 @@ suppressMessages(print(t2))
 ```
 
 ###Libraries Loaded  
-```{r libraries loaded, echo = FALSE}
+```{r libraries loaded, echo = TRUE}
 libraries.loaded <- .packages()
 require(utils)
 sinfo <- sessionInfo()
@@ -159,6 +159,8 @@ This run was created with `r sinfo$R.version$version.string` on a `r pinfo$OS.ty
 
 <!---
 References
+The following command is run manually to get the .md file for submission.
+knit2html("PA1_template.rmd")
 ---> 
 [1]: http://www.cnet.com/topics/wearable-tech/best-wearable-tech/  
 [2]: https://class.coursera.org/repdata-011/human_grading/view/courses/973512/assessments/3/submissions   
