@@ -3,7 +3,7 @@ Reproducible Research, Peer Assignment #1
 ---
 date: "Due Sunday, February 15, 2015"
 output: 
-	html_document:
+  html_document:
     keep_md: true
 ---
 
