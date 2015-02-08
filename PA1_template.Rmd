@@ -1,25 +1,154 @@
+Reproducible Research, Peer Assignment #1
+=========================================
 ---
-title: "Reproducible Research: Peer Assessment 1"
+date: "Due Sunday, February 15, 2015"
 output: 
-  html_document:
+	html_document:
     keep_md: true
 ---
 
-
-## Loading and preprocessing the data
-
-
-
-## What is mean total number of steps taken per day?
+```{r libraries, echo = FALSE, results = "hide", include = FALSE}
+library("ggplot2")
+library("dplyr")
+```
 
 
+##Activity Monitoring Data Analysis, A Quick Look
 
-## What is the average daily activity pattern?
+###Synopsis
+This report both describes the activity monitoring data collected by devices, as well as fulfills the Peer Assignment #1 course requirement.  Devices from companies such as Garmin, Samsung, Jawbone and others are entering mainstream market use.<sup>[1][1]</sup>  Large amounts of data are being collected and can be analysed more easily with available computing software and hardware.  Unfortunately, as described in the assignment, there is "...a lack of statistical methods and software for processing and interpreting the data."<sup>[2][2]</sup> 
+
+The source of the data is identified as "a personal activity monitoring device."  For purposes of the assignment, we believe the data are intact and accurately reflect the output from such a monitoring device.  The data were collected at 5 minute intervals during the months of October and Novermber 2012.
+
+###Loading and Preprocessing the Data
+The data contains 3 columns in a comma-delimited file.  The file was included in a non-password protected zip file named "repdata-data-activity.zip." We read in the data using the standard read.csv command, converting NA to true missing and date to a true date.  
+
+Basic description of the data follows:
+```{r loading, echo = TRUE}
+df <- read.csv("./data/activity.csv", na.strings="NA")
+df$date.value <- as.Date(df$date, "%Y-%m-%d")
+df$dow <- as.factor(weekdays(df$date.value))
+str(df)
+summary(df)
+```
+
+```{r NA, echo = FALSE}
+na.mean <- format(100*mean(is.na(df$steps)),digits=4)
+na.count <- format(sum(is.na(df$steps)),big.mark=",")
+all.count <- format(nrow(df),big.mark=",")
+```
+Missing values in steps account for `r na.mean`% of the observations.
 
 
+###Per Day Calculations
+We calculated the mean and median steps per day, ignoring missing values, and produced the following histogram.
 
-## Imputing missing values
+```{r perday, echo = FALSE}
+attach(df)
+perday <- aggregate(steps~date.value, FUN = sum, rm.NA=TRUE)
+detach(df)
+perday$steps.formatted <- format(perday$steps,big.mark=",")
+t<-ggplot(perday, aes(x=steps)) + geom_histogram(fill="green",color="black",) 
+t<- t + labs(title="Distribution of Total Steps Per Day (Without Imputation)", y="# of days", x ="steps taken") + scale_y_continuous(breaks=seq(c(0:10))) 
+t <- t + scale_x_continuous(breaks=c(0,5000,10000,15000,20000,25000), labels=c("0","5,000","10,000","15000","20,000","25000"))
+
+par(mfrow=c(1,1))
+suppressMessages(print(t))
+
+steps.mean   <- format(mean(perday$steps),big.mark=",")
+steps.median <- format(median(perday$steps),big.mark=",")
+```
+
+The mean number of steps per day is `r steps.mean` and the median is `r steps.median`.
 
 
+###Average Daily Activity Patterns
 
-## Are there differences in activity patterns between weekdays and weekends?
+We calculated the mean number of steps per 5 minute interval and produced the following graphic.  
+
+```{r average, echo = FALSE}
+attach(df)
+avgday <- aggregate(steps~interval, FUN = mean, rm.NA=TRUE)
+detach(df)
+
+t1 <- ggplot(avgday, aes(interval, steps)) + geom_line() + geom_point()
+t1 <- t1 + labs(title="Distribution of Steps", y="# of steps", x ="time of day") + scale_x_continuous(breaks=c(0,400,800,1200,1600,2000,2400),labels=c("12:01 AM","4 AM","8 AM","Noon","4 PM","8 PM","11:59PM"))
+par(mfrow=c(1,1))
+suppressMessages(print(t1))
+
+m  <- max(avgday$steps)
+m  <-avgday[max(avgday$steps),"interval"]
+```
+
+Starting in the morning we see an increase of activity, with the time period of `r m` having the highest average number of steps.  Activity drops off during the evening.
+
+###Computing Missing Values
+As discussed in the assignment, missing values can sometimes lead to bias in calculations.  AS reported earlier, missing values account for `r na.mean`% (`r na.count`) of the possible `r all.count` step observations.
+
+We imputed missing steps using a transform function from Ken Kleinsman in "Example 2014.5: Simple mean imputation."<sup>[3][3]</sup>
+
+
+```{r computing, echo = TRUE}
+df.imputed  = transform(df, steps = ifelse(is.na(steps), mean(steps, na.rm=TRUE), steps))
+```
+
+```{r computed2, echo = FALSE}
+attach(df.imputed)
+perday.imputed <- aggregate(steps~date, FUN = sum, rm.NA=TRUE)
+perday.imputed$steps.formatted <- format(perday.imputed$steps,big.mark=",")
+t.imputed <-ggplot(perday.imputed, aes(x=steps)) + geom_histogram(fill="green",color="black",)
+t.imputed <- t.imputed + labs(title="Distribution of Total Steps Per Day (With Imputation)", y="# of days", x ="steps taken") + scale_y_continuous(breaks=seq(c(0:10))) 
+t.imputed <- t.imputed + scale_x_continuous(breaks=c(0,5000,10000,15000,20000,25000), labels=c("0","5,000","10,000","15000","20,000","25000"))
+par(mfrow=c(2,2))  # this code is NOT working
+suppressMessages(print(t.imputed))
+suppressMessages(print(t))
+
+
+steps.mean.imputed   <- format(mean(perday.imputed$steps),big.mark=",")
+steps.median.imputed <- format(median(perday.imputed$steps),big.mark=",")
+```
+
+With imputation, The mean number of steps per day is `r steps.mean.imputed` and the median is `r steps.median.imputed` compared to `r steps.mean` and the median is `r steps.median` without imputation.  We see only a slight change in the median because of imputation, and the imputed histogram is consistent with the original histrogram.  THe following quick distributions show the effect of the imputation.
+
+```{r checkimputations}
+summary(perday$steps)
+summary(perday.imputed$steps)
+```
+
+###Differences Between Weekdays and Weekends
+
+In order to compare differences in activity between weekdays (Monday through Friday) and weekends (Saturday and Sunday), we constructed a factor using a slick piece of code from Yingua, Hu on nabble.com.<sup>[4][4]</sup>  This creates a factor variable for our new plots.
+
+As can be seen from the following plots, activity on the weekdays begins earlier.  Overall, activity is also higher at each time of the weekday except for 8PM on the weekend.  This woudl suggestion that people are more active during the week, but both sleep later, and are less active on weekends, especially during sports season, when these data were collected.
+
+```{r differences}
+
+df.imputed$period <- as.factor(ifelse(weekdays( df.imputed$date.value) %in% c("Saturday","Sunday"), "Weekend", "Weekday")) 
+
+table(df.imputed$dow,df.imputed$period)
+```
+
+```{r differences2, echo = FALSE}
+t2 <- ggplot(df.imputed, aes(interval, steps), color=period) + geom_line() + geom_point() # the color is not working
+t2 <- t2 + labs(title="Distribution of Steps", y="# of steps", x ="time of day") + scale_x_continuous(breaks=c(0,400,800,1200,1600,2000,2400),labels=c("12:01 AM","4 AM","8 AM","Noon","4 PM","8 PM","11:59PM"))
+t2 <- t2 + facet_grid(period~.) + theme(strip.background = element_rect(fill="pink"))
+par(mfrow=c(1,1))
+suppressMessages(print(t2))
+```
+
+###Libraries Loaded  
+```{r libraries loaded, echo = FALSE}
+libraries.loaded <- .packages()
+```
+
+
+The following libraries are needed for reproducing the output: *`r libraries.loaded`*
+
+
+<!---
+References
+---> 
+[1]: http://www.cnet.com/topics/wearable-tech/best-wearable-tech/  
+[2]: https://class.coursera.org/repdata-011/human_grading/view/courses/973512/assessments/3/submissions   
+[3]: http://www.r-bloggers.com/example-2014-5-simple-mean-imputation/
+[4]: http://r.789695.n4.nabble.com/Summing-daily-values-by-weekday-and-weekend-td3685732.html
