@@ -10,6 +10,7 @@ output:
 ```{r libraries, echo = FALSE, results = "hide", include = FALSE}
 library("ggplot2")
 library("dplyr")
+library("knitr")
 ```
 
 
@@ -108,7 +109,7 @@ steps.mean.imputed   <- format(mean(perday.imputed$steps),big.mark=",")
 steps.median.imputed <- format(median(perday.imputed$steps),big.mark=",")
 ```
 
-With imputation, The mean number of steps per day is `r steps.mean.imputed` and the median is `r steps.median.imputed` compared to `r steps.mean` and the median is `r steps.median` without imputation.  We see only a slight change in the median because of imputation, and the imputed histogram is consistent with the original histrogram.  THe following quick distributions show the effect of the imputation.
+With imputation, The mean number of steps per day is `r steps.mean.imputed` and the median is `r steps.median.imputed` compared to `r steps.mean` and the median is `r steps.median` without imputation.  We see only a slight change in the median because of imputation, and the imputed histogram is consistent with the original histrogram.  The following quick distributions show the effect of the imputation.
 
 ```{r checkimputations}
 summary(perday$steps)
@@ -129,7 +130,14 @@ table(df.imputed$dow,df.imputed$period)
 ```
 
 ```{r differences2, echo = FALSE}
-t2 <- ggplot(df.imputed, aes(interval, steps), color=period) + geom_line() + geom_point() # the color is not working
+attach(df.imputed)
+df2a.imputed  <- aggregate(df.imputed$steps, list(interval,period), FUN=sum)
+df2b.imputed  <- aggregate(df.imputed$steps, list(interval,period), FUN=mean)
+colnames(df2a.imputed) <- c("interval","period","steps")
+colnames(df2b.imputed) <- c("interval","period","steps")
+detach(df.imputed)
+
+t2 <- ggplot(df2b.imputed, aes(interval, steps)) + geom_line() + geom_point() # the color is not working
 t2 <- t2 + labs(title="Distribution of Steps", y="# of steps", x ="time of day") + scale_x_continuous(breaks=c(0,400,800,1200,1600,2000,2400),labels=c("12:01 AM","4 AM","8 AM","Noon","4 PM","8 PM","11:59PM"))
 t2 <- t2 + facet_grid(period~.) + theme(strip.background = element_rect(fill="pink"))
 par(mfrow=c(1,1))
@@ -139,10 +147,14 @@ suppressMessages(print(t2))
 ###Libraries Loaded  
 ```{r libraries loaded, echo = FALSE}
 libraries.loaded <- .packages()
+require(utils)
+sinfo <- sessionInfo()
+pinfo <- .Platform
 ```
 
-
 The following libraries are needed for reproducing the output: *`r libraries.loaded`*
+
+This run was created with `r sinfo$R.version$version.string` on a `r pinfo$OS.type` `r pinfo$r_arch` bit machine.
 
 
 <!---
