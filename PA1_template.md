@@ -23,9 +23,14 @@ The data contains 3 columns in a comma-delimited file.  The file was included in
 Basic description of the data follows:
 
 ```r
+# Read in the data and create true date field
 df <- read.csv("./data/activity.csv", na.strings="NA")
 df$date.value <- as.Date(df$date, "%Y-%m-%d")
+
+# Construct a day of week for later use
 df$dow <- as.factor(weekdays(df$date.value))
+
+# Examine the created dataset for documentation purposes
 str(df)
 ```
 
@@ -63,6 +68,7 @@ summary(df)
 
 
 ```r
+# Calculate the means, and missing counts
 na.mean <- format(100*mean(is.na(df$steps)),digits=4)
 na.count <- format(sum(is.na(df$steps)),big.mark=",")
 all.count <- format(nrow(df),big.mark=",")
@@ -75,34 +81,26 @@ We calculated the mean and median steps per day, ignoring missing values, and pr
 
 
 ```r
+# Calculate the sum of steps per date
 attach(df)
-```
-
-```
-## The following objects are masked from df.imputed (pos = 3):
-## 
-##     date, date.value, dow, interval, steps
-## 
-## The following objects are masked from df.imputed (pos = 4):
-## 
-##     date, date.value, dow, interval, steps
-```
-
-```r
 perday <- aggregate(steps~date.value, FUN = sum, rm.NA=TRUE)
 detach(df)
+
+# Format the steps with commas
 perday$steps.formatted <- format(perday$steps,big.mark=",")
+
+# Prepare and display the Plot
 t<-ggplot(perday, aes(x=steps)) + geom_histogram(fill="green",color="black",) 
 t<- t + labs(title="Distribution of Total Steps Per Day (Without Imputation)", y="# of days", x ="steps taken") + scale_y_continuous(breaks=seq(c(0:10))) 
 t <- t + scale_x_continuous(breaks=c(0,5000,10000,15000,20000,25000), labels=c("0","5,000","10,000","15000","20,000","25000"))
 
-par(mfrow=c(1,1))
 suppressMessages(print(t))
 ```
 
 ![plot of chunk perday](figure/perday-1.png) 
 
 ```r
+# Calculate the mean and median with formats for display in-line
 steps.mean   <- format(mean(perday$steps),big.mark=",")
 steps.median <- format(median(perday$steps),big.mark=",")
 ```
@@ -116,37 +114,27 @@ We calculated the mean number of steps per 5 minute interval and produced the fo
 
 
 ```r
+# Calculate the average steps per interval
 attach(df)
-```
-
-```
-## The following objects are masked from df.imputed (pos = 3):
-## 
-##     date, date.value, dow, interval, steps
-## 
-## The following objects are masked from df.imputed (pos = 4):
-## 
-##     date, date.value, dow, interval, steps
-```
-
-```r
 avgday <- aggregate(steps~interval, FUN = mean, rm.NA=TRUE)
 detach(df)
 
+#Prepare and display the plots
 t1 <- ggplot(avgday, aes(interval, steps)) + geom_line() + geom_point()
-t1 <- t1 + labs(title="Distribution of Steps", y="# of steps", x ="time of day") + scale_x_continuous(breaks=c(0,400,800,1200,1600,2000,2400),labels=c("12:01 AM","4 AM","8 AM","Noon","4 PM","8 PM","11:59PM"))
-par(mfrow=c(1,1))
+t1 <- t1 + labs(title="Distribution of Steps", y="average # of steps", x ="time of day") + scale_x_continuous(breaks=c(0,400,800,1200,1600,2000,2400),labels=c("12:01 AM","4 AM","8 AM","Noon","4 PM","8 PM","11:59PM"))
+
 suppressMessages(print(t1))
 ```
 
 ![plot of chunk average](figure/average-1.png) 
 
 ```r
-m  <- max(avgday$steps)
-m  <-avgday[max(avgday$steps),"interval"]
+# Calculate the maximum number of steps and find which interval it corresponds to for in-line display
+m.steps  <- max(avgday$steps)
+m.interval <- avgday[avgday$steps==m.steps,"interval"]
 ```
 
-Starting in the morning we see an increase of activity, with the time period of 1705 having the highest average number of steps.  Activity drops off during the evening.
+Starting in the morning we see an increase of activity, with the time period of 835 having the highest average number of steps(206.1698113).  Activity drops off during the evening.
 
 ###Computing Missing Values
 As discussed in the assignment, missing values can sometimes lead to bias in calculations.  AS reported earlier, missing values account for 13.11% (2,304) of the possible 17,568 step observations.
@@ -161,26 +149,16 @@ df.imputed  = transform(df, steps = ifelse(is.na(steps), mean(steps, na.rm=TRUE)
 
 
 ```r
+# Calculate the sum of steps per interval
 attach(df.imputed)
-```
-
-```
-## The following objects are masked from df.imputed (pos = 3):
-## 
-##     date, date.value, dow, interval, steps
-## 
-## The following objects are masked from df.imputed (pos = 4):
-## 
-##     date, date.value, dow, interval, steps
-```
-
-```r
 perday.imputed <- aggregate(steps~date, FUN = sum, rm.NA=TRUE)
 perday.imputed$steps.formatted <- format(perday.imputed$steps,big.mark=",")
+
+# Prepare and Display the plots, including the original one.
 t.imputed <-ggplot(perday.imputed, aes(x=steps)) + geom_histogram(fill="green",color="black",)
 t.imputed <- t.imputed + labs(title="Distribution of Total Steps Per Day (With Imputation)", y="# of days", x ="steps taken") + scale_y_continuous(breaks=seq(c(0:10))) 
 t.imputed <- t.imputed + scale_x_continuous(breaks=c(0,5000,10000,15000,20000,25000), labels=c("0","5,000","10,000","15000","20,000","25000"))
-par(mfrow=c(2,2))  # this code is NOT working
+
 suppressMessages(print(t.imputed))
 ```
 
@@ -193,6 +171,7 @@ suppressMessages(print(t))
 ![plot of chunk computed2](figure/computed2-2.png) 
 
 ```r
+# Calculate the mean and median steps using the impute data for display in-line
 steps.mean.imputed   <- format(mean(perday.imputed$steps),big.mark=",")
 steps.median.imputed <- format(median(perday.imputed$steps),big.mark=",")
 ```
@@ -201,6 +180,7 @@ With imputation, The mean number of steps per day is 10,767.19 and the median is
 
 
 ```r
+# Show the basic statistics of steps before/after imputation
 summary(perday$steps)
 ```
 
@@ -226,6 +206,7 @@ As can be seen from the following plots, activity on the weekdays begins earlier
 
 
 ```r
+# Create a factor variable of Weekday vs. Weekend and display table to confirm validity.
 df.imputed$period <- as.factor(ifelse(weekdays( df.imputed$date.value) %in% c("Saturday","Sunday"), "Weekend", "Weekday")) 
 
 table(df.imputed$dow,df.imputed$period)
@@ -245,6 +226,7 @@ table(df.imputed$dow,df.imputed$period)
 
 
 ```r
+# Calculate the sum and mean steps by interval, by period(Weekend/Weekday)
 attach(df.imputed)
 ```
 
@@ -252,14 +234,6 @@ attach(df.imputed)
 ## The following objects are masked from df.imputed (pos = 3):
 ## 
 ##     date, date.value, dow, interval, steps
-## 
-## The following objects are masked from df.imputed (pos = 4):
-## 
-##     date, date.value, dow, interval, steps
-## 
-## The following objects are masked from df.imputed (pos = 5):
-## 
-##     date, date.value, dow, interval, period, steps
 ```
 
 ```r
@@ -269,10 +243,11 @@ colnames(df2a.imputed) <- c("interval","period","steps")
 colnames(df2b.imputed) <- c("interval","period","steps")
 detach(df.imputed)
 
+# Prepare and display the Plot
 t2 <- ggplot(df2b.imputed, aes(interval, steps)) + geom_line() + geom_point() # the color is not working
 t2 <- t2 + labs(title="Distribution of Steps", y="# of steps", x ="time of day") + scale_x_continuous(breaks=c(0,400,800,1200,1600,2000,2400),labels=c("12:01 AM","4 AM","8 AM","Noon","4 PM","8 PM","11:59PM"))
 t2 <- t2 + facet_grid(period~.) + theme(strip.background = element_rect(fill="pink"))
-par(mfrow=c(1,1))
+
 suppressMessages(print(t2))
 ```
 
@@ -281,13 +256,14 @@ suppressMessages(print(t2))
 ###Libraries Loaded  
 
 ```r
+# Document the libraries and environment for display in-line
 libraries.loaded <- .packages()
 require(utils)
 sinfo <- sessionInfo()
 pinfo <- .Platform
 ```
 
-The following libraries are needed for reproducing the output: *knitr, dplyr, ggplot2, stats, graphics, grDevices, utils, datasets, methods, base*
+The following libraries are needed for reproducing the output: *dplyr, ggplot2, knitr, stats, graphics, grDevices, utils, datasets, methods, base*
 
 This run was created with R version 3.1.2 (2014-10-31) on a windows x64 bit machine.
 
